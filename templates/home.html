@@ -15,6 +15,9 @@
         <span>{{ agent.address }}</span>
         <br>
         <span>{{ agent.os }}</span>
+        <form method="POST" action="{{ url_for("kill_agent", uuid=uuid) }}">
+            <input type="submit" value="Kill">
+        </form>
     </div>
 {% endfor %}
 

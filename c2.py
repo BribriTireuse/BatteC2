@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from threading import Thread
 
-from agent.protocol import ProtocolSession, SystemInfoFrame
+from agent.protocol import ProtocolSession, SystemInfoFrame, DieRequestFrame
 
 
 class Agent:
@@ -19,6 +19,9 @@ class Agent:
     @property
     def address(self) -> str:
         return self.session.address[0]
+
+    def die(self):
+        self.session.send(DieRequestFrame())
 
 
 class C2:
