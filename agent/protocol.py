@@ -1,7 +1,9 @@
-from typing import Any, Callable, Iterator, Unpack
+import socket
+
 from dataclasses import dataclass
 from struct import pack, unpack
-import socket
+from threading import Lock
+from typing import Any, Callable, Iterator, Unpack
 
 
 MAX_FRAME_TLV_COUNT = 1000
@@ -217,6 +219,7 @@ class DieRequestFrame:
 @dataclass
 class ProcessStartRequestFrame:
     command: str
+    request_id: int
 
 
 @Codec.frame(0x31)
@@ -224,6 +227,7 @@ class ProcessStartRequestFrame:
 class ProcessStartedFrame:
     command: str
     pid: int
+    request_id: int
 
 
 @Codec.frame(0x32)
@@ -243,6 +247,7 @@ class ProcessTerminatedFrame:
 
 class ProtocolSession:
     _sock: socket.socket
+    _lock: Lock
     _codec: Codec
     __sequence: int
     __handlers = {}
@@ -251,11 +256,14 @@ class ProtocolSession:
         self._sock = sock
         self._codec = Codec()
         self.__sequence = 0
+        self._lock = Lock()
 
     def send(self, frame: Any):
+        self._lock.acquire(blocking=True)
         for tlv in self._codec.encode_frame(frame, self.__sequence):
             self._sock.send(tlv.encode())
             self.__sequence += 1
+        self._lock.release()
 
     def receive(self) -> Any:
         tlvs = []
@@ -267,6 +275,7 @@ class ProtocolSession:
             if tlv.type == 0x01:  # TLV end
                 break
         else:
+            self._lock.release()
             raise ValueError("Received too many TLVs for a single frame")
         return self._codec.decode_frame(*tlvs)
 
