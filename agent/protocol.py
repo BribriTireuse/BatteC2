@@ -245,6 +245,7 @@ class ProtocolSession:
     _sock: socket.socket
     _codec: Codec
     __sequence: int
+    __handlers = {}
 
     def __init__(self, sock: socket.socket):
         self._sock = sock
@@ -272,6 +273,23 @@ class ProtocolSession:
         tlv_type, tlv_length = unpack(r'>HH', tlv_header)
         tlv_value = self._sock.recv(tlv_length - 4) # We already got the header
         return TLV(tlv_type, tlv_value)
+
+    def run(self):
+        while True:
+            frame = self.receive()
+            handler = self.__handlers.get(type(frame))
+            if handler is None:
+                print(f"Unsupported frame: {frame}")
+                continue
+            handler(frame, self)
+
+    def handler(self, clazz):
+        def decorator(func):
+            self.__handlers[clazz] = func
+            return func
+
+        return decorator
+
 
 
 
