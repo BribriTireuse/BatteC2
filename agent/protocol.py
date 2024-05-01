@@ -261,6 +261,8 @@ class ProtocolSession:
         tlvs = []
         for _ in range(MAX_FRAME_TLV_COUNT):
             tlv = self._receive_tlv()
+            if tlv is None:
+                return None
             tlvs.append(tlv)
             if tlv.type == 0x01:  # TLV end
                 break
@@ -268,15 +270,21 @@ class ProtocolSession:
             raise ValueError("Received too many TLVs for a single frame")
         return self._codec.decode_frame(*tlvs)
 
-    def _receive_tlv(self) -> TLV:
+    def _receive_tlv(self) -> TLV | None:
         tlv_header = self._sock.recv(4)
+        if len(tlv_header) == 0:
+            return None
         tlv_type, tlv_length = unpack(r'>HH', tlv_header)
-        tlv_value = self._sock.recv(tlv_length - 4) # We already got the header
+        tlv_value = self._sock.recv(tlv_length - 4)  # We already got the header
+        if len(tlv_value) == 0:
+            return None
         return TLV(tlv_type, tlv_value)
 
     def run(self):
         while True:
             frame = self.receive()
+            if frame is None:
+                break
             handler = self.__handlers.get(type(frame))
             if handler is None:
                 print(f"Unsupported frame: {frame}")

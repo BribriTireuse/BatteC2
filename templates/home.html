@@ -5,6 +5,15 @@
     <title>Home</title>
 </head>
 <body>
-Hello world
+<h1>Agents</h1>
+
+{% for uuid, agent in c2.agents.items() %}
+    <div class="agent-card">
+        <h3>Agent</h3>
+        <p>{{ agent.uuid }}</p>
+        <p>{{ agent.os }}</p>
+    </div>
+{% endfor %}
+
 </body>
 </html>
