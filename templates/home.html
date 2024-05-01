@@ -10,8 +10,11 @@
 {% for uuid, agent in c2.agents.items() %}
     <div class="agent-card">
         <h3>Agent</h3>
-        <p>{{ agent.uuid }}</p>
-        <p>{{ agent.os }}</p>
+        <span>{{ agent.uuid }}</span>
+        <br>
+        <span>{{ agent.address }}</span>
+        <br>
+        <span>{{ agent.os }}</span>
     </div>
 {% endfor %}
 

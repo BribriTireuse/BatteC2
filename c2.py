@@ -16,6 +16,10 @@ class Agent:
         self.uuid = uuid
         self.os = "Unknown"
 
+    @property
+    def address(self) -> str:
+        return self.session.address[0]
+
 
 class C2:
     agents: dict[uuid4, Agent]

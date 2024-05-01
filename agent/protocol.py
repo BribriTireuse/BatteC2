@@ -298,6 +298,10 @@ class ProtocolSession:
 
         return decorator
 
+    @property
+    def address(self) -> tuple[str, int]:
+        return self._sock.getpeername()
+
 
 
 
