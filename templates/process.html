@@ -5,6 +5,7 @@
     <title>Process</title>
     <link rel="stylesheet" href="{{ url_for("static", filename="css/xterm.css") }}">
     <script src="{{ url_for("static", filename="js/xterm.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/addon-attach.js") }}"></script>
     <script>
         let agent = "{{ agent }}";
         let pid = {{ pid }};
@@ -12,14 +13,14 @@
 </head>
 <body>
 <div id="terminal"></div>
+<input type="text" id="cmd">
+<button onclick="sendCommand()">Execute</button>
 <script>
-    let term = new Terminal();
+    const term = new Terminal({convertEol: true, stdin: false});
+    const socket = new WebSocket(`/agent/${agent}/process/${pid}/socket`);
+    const attachAddon = new AttachAddon.AttachAddon(socket);
     term.open(document.getElementById('terminal'));
-    fetch(`/agent/${agent}/process/${pid}/stdout`).then(r => {
-        r.arrayBuffer().then(b => {
-            term.write(new Uint8Array(b));
-        });
-    });
+    term.loadAddon(attachAddon);
 </script>
 
 </body>

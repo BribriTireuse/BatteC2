@@ -277,7 +277,8 @@ class ProtocolSession:
         else:
             self._lock.release()
             raise ValueError("Received too many TLVs for a single frame")
-        return self._codec.decode_frame(*tlvs)
+        frame = self._codec.decode_frame(*tlvs)
+        return frame
 
     def _receive_tlv(self) -> TLV | None:
         tlv_header = self._sock.recv(4)

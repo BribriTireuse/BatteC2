@@ -57,6 +57,10 @@ class ProcessTask:
         if self.process.poll() is None:
             self.process.kill()
 
+    def write_stdin(self, data: bytes):
+        self.process.stdin.write(data)
+        self.process.stdin.flush()
+
 
 @c2.handler(PingFrame)
 def handle(frame: PingFrame, session: ProtocolSession):
@@ -78,6 +82,16 @@ def handle(frame: DieRequestFrame, session: ProtocolSession):
 @c2.handler(ProcessStartRequestFrame)
 def handle(frame: ProcessStartRequestFrame, session: ProtocolSession):
     ProcessTask(frame.command, frame.request_id, session).start()
+
+
+@c2.handler(ProcessPipeFrame)
+def handle(frame: ProcessPipeFrame, session: ProtocolSession):
+    if frame.descriptor != 0:
+        return
+    process: ProcessTask = processes.get(frame.pid)
+    if process is None:
+        return
+    process.write_stdin(frame.data)
 
 
 def send_system_info(session: ProtocolSession):
