@@ -1,6 +1,7 @@
 # BatteC2
 
 *A Python-based command and control framework for red teams with a fancy web UI*
+
 **Work in progress**
 
 ![Shell](images/batte.png)
@@ -14,7 +15,7 @@
 - Efficient kill-switch
 - Superb web UI
 
-## In coming...
+## Incoming...
 
 - Encryption
 - File browsing
