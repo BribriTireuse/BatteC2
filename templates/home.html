@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/style.css") }}">
 </head>
 <body>
 <h1>Agents</h1>
 
+<section id="agents">
 {% for uuid, agent in c2.agents.items() %}
     <div class="agent-card">
         <h3>Agent</h3>
@@ -28,6 +30,6 @@
         </form>
     </div>
 {% endfor %}
-
+</section>
 </body>
 </html>

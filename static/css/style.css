@@ -1,0 +1,50 @@
+* {
+    color: green;
+    font-family: sans-serif;
+}
+
+html {
+    background: black;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;
+}
+
+input {
+    background: #2b2b2b;
+    border: solid green;
+    color: #33ff33;
+}
+
+form {
+    margin: 1rem;
+}
+
+form.login {
+    margin: 4rem;
+}
+
+img.medium {
+    width: 8rem;
+}
+
+.agent-card {
+    padding: 2rem;
+    border: solid green;
+    text-align: left;
+}
+
+.agent-card form {
+    width: 100%;
+}
+
+#terminal {
+    color: unset;
+    text-align: unset;
+    font-family: unset;
+    display: unset;
+}

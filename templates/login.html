@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/style.css") }}">
 </head>
 <body>
     <h1>BatteC2</h1>
     <h2>Ze C2 to rule them all</h2>
-    <form method="POST">
+    <img class="medium" src="{{ url_for("static", filename="images/batte.png") }}">
+    <form method="POST" class="login">
         <input type="password" name="password" placeholder="Password">
         <input type="submit" value="Login">
     </form>

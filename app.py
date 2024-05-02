@@ -74,7 +74,7 @@ def process(uuid, pid):
     process = agent.processes.get(pid)
     if process is None:
         return "Not found", 404
-    return render_template("process.html", agent=uuid, pid=process.pid)
+    return render_template("process.html", agent=uuid, pid=process.pid, command=process.command)
 
 
 @app.route("/agent/<uuid>/process/<int:pid>/output")
