@@ -10,7 +10,7 @@ from os import environ
 from c2 import C2
 
 PASSWORD = environ["PASSWORD"]
-c2 = C2(("127.0.0.1", 1337))
+c2 = C2(("0.0.0.0", 1337))
 app = Flask(__name__)
 app.secret_key = PASSWORD
 sock = Sock(app)
@@ -130,4 +130,4 @@ def download_file(uuid):
 
 if __name__ == '__main__':
     with c2:
-        app.run()
+        app.run("0.0.0.0", 5000)
